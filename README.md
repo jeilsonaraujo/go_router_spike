@@ -111,6 +111,80 @@ flutter pub get
 flutter run
 ```
 
+
+
+---
+
+## 📋 Implementation
+
+### Create a route observer on route settings
+``` dart
+final routeObserver = RouteObserver<ModalRoute<void>>();
+```
+### Add the observer to the observer list on Go Router config
+
+```dart
+get routerConfig => GoRouter(
+  observers: [routeObserver],
+  // ...
+```
+
+### The page where we whant to listen navigatioon should use with RouteAware mixin
+``` dart
+// ...
+class _FeatureAState extends State<FeatureA> with RouteAware {
+// ...
+```
+
+### Subscribe to route observer
+```dart
+class _FeatureAState extends State<FeatureA> with RouteAware {
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final modalRoute = ModalRoute.of(context);
+    if (modalRoute is PageRoute) {
+      routeObserver.subscribe(this, modalRoute);
+    }
+  }
+
+  @override
+  void dispose() {
+    routeObserver.unsubscribe(this);
+    super.dispose();
+  }
+  // ...
+```
+
+### Then use the didPopNext to deal with the navigation
+```dart
+class _FeatureAState extends State<FeatureA> with RouteAware {
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final modalRoute = ModalRoute.of(context);
+    if (modalRoute is PageRoute) {
+      routeObserver.subscribe(this, modalRoute);
+    }
+  }
+
+  @override
+  void dispose() {
+    routeObserver.unsubscribe(this);
+    super.dispose();
+  }
+
+  @override
+  void didPopNext() {
+    super.didPopNext();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Navigated back to FeatureA')));
+    });
+    debugPrint('Navigated back to FeatureA');
+  }
+// ...
+```
+
 ---
 
 ## 🧪 Next Steps
